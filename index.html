@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISMO AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for the chat vibes */
+        #chat-window::-webkit-scrollbar { width: 5px; }
+        #chat-window::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans h-screen flex flex-col">
+
+    <nav class="bg-indigo-700 text-white p-4 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">📦 WISMO Support</h1>
+            <span class="text-xs bg-indigo-500 px-2 py-1 rounded-full uppercase">Online</span>
+        </div>
+    </nav>
+
+    <main id="chat-window" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 max-w-4xl mx-auto w-full">
+        <div class="flex items-end">
+            <div class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-[80%]">
+                Hi! I'm your order assistant. You can ask me for your <strong>order status</strong> or request a <strong>return</strong> using your Order ID.
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 p-4">
+        <div class="max-w-4xl mx-auto flex gap-2">
+            <input 
+                type="text" 
+                id="user-input" 
+                placeholder="Where is my order ORD123456?" 
+                class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                onkeypress="if(event.key === 'Enter') sendMessage()"
+            >
+            <button 
+                onclick="sendMessage()" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm"
+            >
+                Send
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+
+        function appendMessage(role, text) {
+            const wrapper = document.createElement('div');
+            wrapper.className = role === 'user' ? 'flex justify-end' : 'flex items-end';
+            
+            const bubble = document.createElement('div');
+            bubble.className = role === 'user' 
+                ? 'bg-indigo-600 text-white p-3 rounded-2xl rounded-br-none shadow-md max-w-[80%]' 
+                : 'bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-[80%]';
+            
+            bubble.innerHTML = text;
+            wrapper.appendChild(bubble);
+            chatWindow.appendChild(wrapper);
+            
+            // Auto-scroll to bottom
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // 1. Show User Message
+            appendMessage('user', message);
+            userInput.value = '';
+
+            // 2. Show "Typing..." vibe
+            const typingId = "typing-" + Date.now();
+            appendMessage('bot', `<span id="${typingId}" class="italic text-slate-400">Assistant is thinking...</span>`);
+
+            try {
+                // 3. Hit the FastAPI Backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                // 4. Replace "Typing" with real response
+                document.getElementById(typingId).parentElement.innerHTML = data.reply;
+            } catch (error) {
+                document.getElementById(typingId).parentElement.innerHTML = "Sorry, I'm having trouble connecting to the server.";
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
