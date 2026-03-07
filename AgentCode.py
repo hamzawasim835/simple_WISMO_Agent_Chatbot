@@ -10,6 +10,11 @@ from langchain_core.tools import Tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.tools import StructuredTool
 from pydantic import BaseModel, Field
+from pathlib import Path
+
+# Generic pathing logic
+base_path = Path(__file__).parent 
+data_file = base_path / "order_record.txt"
 
 # Loading API key through .env file
 load_dotenv()
@@ -19,7 +24,7 @@ load_dotenv()
 def get_order_status(orderID):
     # Loading data from .txt file into a dictionary
     datadict = {}
-    with open("E:\Workshop\ECED\Inonest\AI\Single_Agent_WISMO\order_record.txt") as f:
+    with open(data_file, "r") as f:
         for line in f:
             (key, val) = line.split(",")
             datadict[key] = val
@@ -36,8 +41,7 @@ class ReturnInput(BaseModel):
     reason: str = Field(description="The user's reason for returning the item")
 def process_returns(order_id: str, reason: str = "None Given"):
     datadict = {}
-    # Use 'r' before the string for Windows paths to avoid escape character errors
-    path = r"E:\Workshop\ECED\Inonest\AI\Single_Agent_WISMO\order_record.txt"
+    path = data_file
     
     try:
         with open(path, "r") as f:
