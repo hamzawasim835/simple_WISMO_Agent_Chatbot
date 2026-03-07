@@ -3,13 +3,11 @@ import os
 import random
 from dotenv import load_dotenv
 from langchain import hub
-from langchain.agents import (
-    AgentExecutor,
-    create_react_agent,
-)
+from langchain.agents import AgentExecutor, create_structured_chat_agent
+from langchain.memory import ConversationBufferMemory
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.tools import Tool
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 # Loading API key through .env file
 load_dotenv()
@@ -26,10 +24,9 @@ def get_order_status(orderID):
     # Searching the dictionary
     for key in datadict:
         if (key == orderID.strip().upper()):
-            print(datadict[key])
-            return True
-    print("Order not found.")
-    return False
+            status =  datadict[key]
+            return status
+    return ("Order not found.")
 
 def process_returns(orderID, Reason):
     # Loading data into dict
@@ -68,20 +65,23 @@ tools = [
 ]
 
 # Pulling prompt template from hub
-prompt = hub.pull("hwchase17/react")
+prompt = hub.pull("hwchase17/structured-chat-agent")
+
+# Initializing memory
+memory = ConversationBufferMemory(
+    memory_key="chat_history", return_messages=True)
 
 # Initializing LLM
 llm = ChatGoogleGenerativeAI(
-    model = "gemini-3.1-flash-lite-preview",
+    model = "gemini-3-flash-preview",
     temperature=0
 )
 
 # Creating the ReAct agent using the create_react_agent function
-agent = create_react_agent(
+agent = create_structured_chat_agent(
     llm=llm,
     tools=tools,
     prompt=prompt,
-    stop_sequence=True,
 )
 
 # Creating an agent executor from the agent and tools
@@ -89,15 +89,22 @@ agent_executor = AgentExecutor.from_agent_and_tools(
     agent=agent,
     tools=tools,
     verbose=False,
+    memory=memory,
+    handle_parsing_errors=True,
 )
 
-# Looping logic chat logic goes here
+
 while True:
-    query = input("You: ")
-    if query.lower() == "exit":
+    user_input = input("User: ")
+    if user_input.lower() == "exit":
         break
 
-    result = agent_executor.invoke({"input": query})
-    #response = result.content
+    # Add the user's message to the conversation memory
+    memory.chat_memory.add_message(HumanMessage(content=user_input))
 
-    print(f"AI: {result}")
+    # Invoke the agent with the user input and the current chat history
+    response = agent_executor.invoke({"input": user_input})
+    print("Bot:", response["output"])
+
+    # Add the agent's response to the conversation memory
+    memory.chat_memory.add_message(AIMessage(content=response["output"]))
