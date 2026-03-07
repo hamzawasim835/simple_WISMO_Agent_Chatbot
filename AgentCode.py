@@ -8,11 +8,14 @@ from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.tools import Tool
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.tools import StructuredTool
+from pydantic import BaseModel, Field
 
 # Loading API key through .env file
 load_dotenv()
 
 # Tools go here
+# Order Tracking
 def get_order_status(orderID):
     # Loading data from .txt file into a dictionary
     datadict = {}
@@ -27,26 +30,32 @@ def get_order_status(orderID):
         return status
     return ("Order not found.")
 
-def process_returns(orderID, Reason= "None Given"):
-    # Loading data into dict
+# Return Processing
+class ReturnInput(BaseModel):
+    order_id: str = Field(description="The ORDXXXXXX ID from the user")
+    reason: str = Field(description="The user's reason for returning the item")
+def process_returns(order_id: str, reason: str = "None Given"):
     datadict = {}
-    with open("E:\Workshop\ECED\Inonest\AI\Single_Agent_WISMO\order_record.txt") as f:
-        for line in f:
-            (key, val) = line.split(",")
-            datadict[key] = val
+    # Use 'r' before the string for Windows paths to avoid escape character errors
+    path = r"E:\Workshop\ECED\Inonest\AI\Single_Agent_WISMO\order_record.txt"
     
-    # Locating target, processing return
-    if (key == orderID.strip().upper() in datadict):
-        print("Return request apporved :) ")
-            
-        # Creating and printing return number
-        n = 6
-        li = random.sample(range(0, 9), n)
-        retcode = "RET"
-        for i in li:
-            retcode += str(i)
-            
-            return retcode
+    try:
+        with open(path, "r") as f:
+            for line in f:
+                if "," in line:
+                    key, val = line.strip().split(",")
+                    datadict[key.strip().upper()] = val
+    except FileNotFoundError:
+        return "Error: Database file not found."
+
+    clean_id = order_id.strip().upper()
+    
+    if clean_id in datadict:
+        # Generate random 6-digit code correctly
+        ret_suffix = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        return f"Return approved. Return ID: RET{ret_suffix}. Reason logged: {reason}"
+    
+    return f"Order {order_id} not found in our records."
 
 tools = [
     Tool(
@@ -54,14 +63,12 @@ tools = [
         func=get_order_status,  
         description="checks dictionary and returns current order status",
     ),
-    Tool(
-        name="process_returns",  
-        func=process_returns,  
-        description="useful for processing returns. Checks dictionary to see" \
-        "if order is there, then approves refund and returns a return id. " \
-        "Order ID and Reason must both be plugged into the function when using the tool" \
-        ", otherwise, the tool will fail.",
-    ),
+    StructuredTool.from_function(
+        func=process_returns,
+        name="process_returns",
+        description="Used to approve a return. Requires a valid Order ID and a Reason.",
+        args_schema=ReturnInput # This is the magic ingredient
+    )
 ]
 
 # Pulling prompt template from hub
