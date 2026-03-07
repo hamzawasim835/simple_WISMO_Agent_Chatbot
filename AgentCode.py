@@ -22,13 +22,12 @@ def get_order_status(orderID):
             datadict[key] = val
 
     # Searching the dictionary
-    for key in datadict:
-        if (key == orderID.strip().upper()):
-            status =  datadict[key]
-            return status
+    if (orderID.strip().upper() in datadict):
+        status =  datadict[key]
+        return status
     return ("Order not found.")
 
-def process_returns(orderID, Reason):
+def process_returns(orderID, Reason= "None Given"):
     # Loading data into dict
     datadict = {}
     with open("E:\Workshop\ECED\Inonest\AI\Single_Agent_WISMO\order_record.txt") as f:
@@ -37,18 +36,17 @@ def process_returns(orderID, Reason):
             datadict[key] = val
     
     # Locating target, processing return
-    for key in datadict:
-        if (key == orderID.strip().upper()):
-            print("Return request apporved :) ")
+    if (key == orderID.strip().upper() in datadict):
+        print("Return request apporved :) ")
             
-            # Creating and printing return number
-            n = 6
-            li = random.sample(range(0, 9), n)
-            retcode = "RET"
-            for i in li:
-                retcode += i
+        # Creating and printing return number
+        n = 6
+        li = random.sample(range(0, 9), n)
+        retcode = "RET"
+        for i in li:
+            retcode += str(i)
             
-            return retcode, Reason
+            return retcode
 
 tools = [
     Tool(
@@ -60,7 +58,9 @@ tools = [
         name="process_returns",  
         func=process_returns,  
         description="useful for processing returns. Checks dictionary to see" \
-        "if order is there, then approves refund and returns a return id",
+        "if order is there, then approves refund and returns a return id. " \
+        "Order ID and Reason must both be plugged into the function when using the tool" \
+        ", otherwise, the tool will fail.",
     ),
 ]
 
@@ -73,7 +73,7 @@ memory = ConversationBufferMemory(
 
 # Initializing LLM
 llm = ChatGoogleGenerativeAI(
-    model = "gemini-3-flash-preview",
+    model = "gemini-3.1-flash-lite-preview",
     temperature=0
 )
 
