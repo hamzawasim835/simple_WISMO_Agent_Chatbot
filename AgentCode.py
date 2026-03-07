@@ -66,7 +66,8 @@ tools = [
     StructuredTool.from_function(
         func=process_returns,
         name="process_returns",
-        description="Used to approve a return. Requires a valid Order ID and a Reason.",
+        description="Used to approve a return. Requires a valid Order ID and a Reason. If user" \
+        "doesn't provide a reason, keep asking them for one until they give one",
         args_schema=ReturnInput # This is the magic ingredient
     )
 ]
