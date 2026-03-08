@@ -12,8 +12,9 @@ class ChatRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
-    # Serves the actual HTML file from the disk
-    return FileResponse(os.path.join(script_dir, "index.html"))
+    # This ensures it finds the file in the same directory as app.py
+    path = os.path.join(os.path.dirname(__file__), "index.html")
+    return FileResponse(path)
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
