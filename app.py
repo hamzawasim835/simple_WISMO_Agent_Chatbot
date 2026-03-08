@@ -18,17 +18,7 @@ async def read_index():
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
-    try:
-        # Import the executor from your agent file
-        from agent import agent_executor 
-        
-        # Invoke the agent with the user's message
-        response = agent_executor.invoke({"input": req.message})
-        
-        # Return the actual output from the LLM
-        return {"reply": response["output"]}
-        
-    except Exception as e:
-        # If something breaks (like an API key issue), show the error
-        print(f"Deployment Error: {e}")
-        return {"reply": f"Sorry, I ran into an error: {str(e)}"}
+    
+    from agent import agent_executor
+    response = agent_executor.invoke({"input": req.message})
+    return {"reply": response["output"]}
