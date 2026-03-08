@@ -12,6 +12,9 @@ from langchain.tools import StructuredTool
 from pydantic import BaseModel, Field
 from pathlib import Path
 
+# Vercel logs cleanup thingy
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
+
 # Generic pathing logic
 base_path = Path(__file__).parent 
 data_file = base_path / "order_record.txt"
@@ -105,18 +108,18 @@ agent_executor = AgentExecutor.from_agent_and_tools(
     handle_parsing_errors=True,
 )
 
+if __name__ == "__main__":
+    while True:
+        user_input = input("User: ")
+        if user_input.lower() == "exit":
+            break
 
-while True:
-    user_input = input("User: ")
-    if user_input.lower() == "exit":
-        break
+        # Add the user's message to the conversation memory
+        memory.chat_memory.add_message(HumanMessage(content=user_input))
 
-    # Add the user's message to the conversation memory
-    memory.chat_memory.add_message(HumanMessage(content=user_input))
+        # Invoke the agent with the user input and the current chat history
+        response = agent_executor.invoke({"input": user_input})
+        print("Bot:", response["output"])
 
-    # Invoke the agent with the user input and the current chat history
-    response = agent_executor.invoke({"input": user_input})
-    print("Bot:", response["output"])
-
-    # Add the agent's response to the conversation memory
-    memory.chat_memory.add_message(AIMessage(content=response["output"]))
+        # Add the agent's response to the conversation memory
+        memory.chat_memory.add_message(AIMessage(content=response["output"]))
