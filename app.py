@@ -18,9 +18,17 @@ async def read_index():
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
-    # Agent calling logic
-    response = agent_executor.invoke({"input": req.message})
-    return {"reply": response["output"]}
-    
-    # Placeholder for your vibe-coding logic:
-    # return {"reply": "Agent is processing: " + req.message}
+    try:
+        # 1. Call your Agent (Ensure 'agent_executor' is defined in agent.py and imported)
+        from agent import agent_executor 
+        
+        # 2. Run the invocation
+        response = agent_executor.invoke({"input": req.message})
+        
+        # 3. Return the AI's actual words
+        return {"reply": response["output"]}
+        
+    except Exception as e:
+        # This helps you debug in the UI if the API key or Agent fails
+        print(f"Error in chat endpoint: {e}")
+        return {"reply": f"Agent Error: {str(e)}"}
