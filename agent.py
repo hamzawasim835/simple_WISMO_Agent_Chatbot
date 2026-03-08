@@ -2,7 +2,7 @@
 import os
 import random
 from dotenv import load_dotenv
-import langchainhub as hub
+from langchain import hub
 from langchain.agents import AgentExecutor, create_structured_chat_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
