@@ -19,16 +19,16 @@ async def read_index():
 @app.post("/chat")
 async def chat(req: ChatRequest):
     try:
-        # 1. Call your Agent (Ensure 'agent_executor' is defined in agent.py and imported)
+        # Import the executor from your agent file
         from agent import agent_executor 
         
-        # 2. Run the invocation
+        # Invoke the agent with the user's message
         response = agent_executor.invoke({"input": req.message})
         
-        # 3. Return the AI's actual words
+        # Return the actual output from the LLM
         return {"reply": response["output"]}
         
     except Exception as e:
-        # This helps you debug in the UI if the API key or Agent fails
-        print(f"Error in chat endpoint: {e}")
-        return {"reply": f"Agent Error: {str(e)}"}
+        # If something breaks (like an API key issue), show the error
+        print(f"Deployment Error: {e}")
+        return {"reply": f"Sorry, I ran into an error: {str(e)}"}
