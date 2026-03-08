@@ -18,9 +18,9 @@ async def read_index():
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
-    # This is where you call your agent
-    # response = agent_executor.invoke({"input": req.message})
-    # return {"reply": response["output"]}
+    # Agent calling logic
+    response = agent_executor.invoke({"input": req.message})
+    return {"reply": response["output"]}
     
     # Placeholder for your vibe-coding logic:
-    return {"reply": "Agent is processing: " + req.message}
+    # return {"reply": "Agent is processing: " + req.message}
